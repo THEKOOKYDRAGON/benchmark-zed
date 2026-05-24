@@ -4,9 +4,9 @@ on:
   workflow_dispatch: {}
 
 jobs:
-  monkci-remote-cache:
-    name: Monk CI with Remote Cache
-    runs-on: monkci-ubuntu-24.04-4
+  BlackSmith-remote-cache:
+    name: BlackSmith with Remote Cache
+    runs-on: blacksmith-4vcpu-ubuntu-2404 
     defaults:
       run:
         working-directory: upstream
@@ -21,9 +21,9 @@ jobs:
       - run: ./script/linux # Install Dependencies
       - run: cargo build --release
 
-  monkci-cacheless:
-    name: Monk CI Cacheless
-    runs-on: monkci-ubuntu-24.04-4
+  BlackSmith-cacheless:
+    name: BlackSmith Cacheless
+    runs-on: blacksmith-4vcpu-ubuntu-2404 
     defaults:
       run:
         working-directory: upstream
