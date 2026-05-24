@@ -4,22 +4,22 @@ on:
   workflow_dispatch: {}
 
 jobs:
-  BlackSmith-remote-cache:
-    name: BlackSmith with Remote Cache
-    runs-on: blacksmith-4vcpu-ubuntu-2404 
-    defaults:
-      run:
-        working-directory: upstream
-    env:
-      RUSTC_WRAPPER: "sccache"
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-      - name: Run sccache-cache
-        uses: mozilla-actions/sccache-action@v0.0.7
-      - run: ./script/linux # Install Dependencies
-      - run: cargo build --release
+  # BlackSmith-remote-cache:
+  #   name: BlackSmith with Remote Cache
+  #   runs-on: blacksmith-4vcpu-ubuntu-2404 
+  #   defaults:
+  #     run:
+  #       working-directory: upstream
+  #   env:
+  #     RUSTC_WRAPPER: "sccache"
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #       with:
+  #         submodules: recursive
+  #     - name: Run sccache-cache
+  #       uses: mozilla-actions/sccache-action@v0.0.7
+  #     - run: ./script/linux # Install Dependencies
+  #     - run: cargo build --release
 
   BlackSmith-cacheless:
     name: BlackSmith Cacheless
@@ -36,35 +36,50 @@ jobs:
       - run: ./script/linux # Install Dependencies
       - run: cargo build --release
 
-  github-local-cache:
-    name: GitHub with Local Cache
-    runs-on: ubuntu-24.04
-    defaults:
-      run:
-        working-directory: upstream
-    env:
-      SCCACHE_GHA_ENABLED: "true"
-      RUSTC_WRAPPER: "sccache"
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
+  # github-local-cache:
+  #   name: GitHub with Local Cache
+  #   runs-on: ubuntu-24.04
+  #   defaults:
+  #     run:
+  #       working-directory: upstream
+  #   env:
+  #     SCCACHE_GHA_ENABLED: "true"
+  #     RUSTC_WRAPPER: "sccache"
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #       with:
+  #         submodules: recursive
 
-      - name: Run sccache-cache
-        uses: mozilla-actions/sccache-action@v0.0.7
+  #     - name: Run sccache-cache
+  #       uses: mozilla-actions/sccache-action@v0.0.7
 
-      - name: Check sccache version
-        run: sccache --version
+  #     - name: Check sccache version
+  #       run: sccache --version
 
-      - name: Install Dependencies
-        run: ./script/linux
+  #     - name: Install Dependencies
+  #       run: ./script/linux
 
-      - name: Build with Cargo
-        run: cargo build --release --verbose
+  #     - name: Build with Cargo
+  #       run: cargo build --release --verbose
 
   github-cacheless:
     name: Github Cacheless
     runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: upstream
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Run sccache-cache
+        uses: mozilla-actions/sccache-action@v0.0.7
+      - run: ./script/linux # Install Dependencies
+      - run: cargo build --release
+
+  monkci-cacheless:
+    name: Monk CI Cacheless
+    runs-on: monkci-ubuntu-24.04-4
     defaults:
       run:
         working-directory: upstream
