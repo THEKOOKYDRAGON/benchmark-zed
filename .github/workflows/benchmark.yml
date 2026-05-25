@@ -79,7 +79,7 @@ jobs:
 
   monkci-cacheless:
     name: Monk CI Cacheless
-    runs-on: monkci-ubuntu-24.04-4
+    runs-on: monkci-ubuntu-24.04-32
     defaults:
       run:
         working-directory: upstream
