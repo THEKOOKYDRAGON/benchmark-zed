@@ -2,7 +2,6 @@ name: Benchmark
 on:
   push: {}
   workflow_dispatch: {}
-
 jobs:
   # BlackSmith-remote-cache:
   #   name: BlackSmith with Remote Cache
@@ -20,7 +19,6 @@ jobs:
   #       uses: mozilla-actions/sccache-action@v0.0.7
   #     - run: ./script/linux # Install Dependencies
   #     - run: cargo build --release
-
   BlackSmith-cacheless:
     name: BlackSmith Cacheless
     runs-on: blacksmith-32vcpu-ubuntu-2404 
@@ -31,11 +29,12 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
       - name: Run sccache-cache
         uses: mozilla-actions/sccache-action@v0.0.7
       - run: ./script/linux # Install Dependencies
       - run: cargo build --release
-
   # github-local-cache:
   #   name: GitHub with Local Cache
   #   runs-on: ubuntu-24.04
@@ -49,19 +48,14 @@ jobs:
   #     - uses: actions/checkout@v4
   #       with:
   #         submodules: recursive
-
   #     - name: Run sccache-cache
   #       uses: mozilla-actions/sccache-action@v0.0.7
-
   #     - name: Check sccache version
   #       run: sccache --version
-
   #     - name: Install Dependencies
   #       run: ./script/linux
-
   #     - name: Build with Cargo
   #       run: cargo build --release --verbose
-
   github-cacheless:
     name: Github Cacheless
     runs-on: ubuntu-24.04
@@ -72,11 +66,12 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
       - name: Run sccache-cache
         uses: mozilla-actions/sccache-action@v0.0.7
       - run: ./script/linux # Install Dependencies
       - run: cargo build --release
-
   monkci-cacheless:
     name: Monk CI Cacheless
     runs-on: monkci-ubuntu-24.04-32
@@ -87,6 +82,8 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
       - name: Run sccache-cache
         uses: mozilla-actions/sccache-action@v0.0.7
       - run: ./script/linux # Install Dependencies
