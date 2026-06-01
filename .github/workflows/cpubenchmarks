@@ -15,7 +15,7 @@
 name: PassMark CPU Benchmark
 
 on:
-  workflow_dispatch: {}   # run manually from the Actions tab
+  workflow_dispatch:
 
 jobs:
   benchmark:
