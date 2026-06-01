@@ -37,7 +37,7 @@ jobs:
             GB_VERSION="$(curl -fsSL -A 'Mozilla/5.0' https://www.geekbench.com/download/linux/ \
               | grep -oP 'You are downloading Geekbench \K[0-9.]+' | head -1 || true)"
           fi
-          GB_VERSION="${GB_VERSION:-6.5.0}"
+          GB_VERSION="${GB_VERSION:-6.7.1}"   # 6.7.1 fixes the "internal code 35" upload bug
           echo "Using Geekbench $GB_VERSION"
 
           # 2. Download + extract (~230 MB, x86_64)
