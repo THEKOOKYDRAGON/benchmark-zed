@@ -1,0 +1,55 @@
+
+name: Geekbench 6 - Avrea x15
+ 
+on:
+  workflow_dispatch:
+    inputs:
+      gb_version:
+        description: "Geekbench version"
+        required: false
+        default: "6.7.1"
+ 
+jobs:
+  geekbench:
+    name: "Geekbench avrea #${{ matrix.run }}"
+    runs-on: avrea-ubuntu-latest-32-vcpu
+    strategy:
+      fail-fast: false          # a failed run must not cancel the other 14
+      max-parallel: 15          # launch all 15 at once, not in waves
+      matrix:
+        run: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+    steps:
+      - name: Run Geekbench 6
+        env:
+          GB_VERSION_INPUT: ${{ github.event.inputs.gb_version }}
+          GB_LICENSE_EMAIL: ${{ secrets.GEEKBENCH_EMAIL }}   # optional
+          GB_LICENSE_KEY: ${{ secrets.GEEKBENCH_KEY }}       # optional
+          RUN_ID: ${{ matrix.run }}
+        run: |
+          set -euo pipefail
+          GB_VERSION="${GB_VERSION_INPUT:-6.7.1}"   # 6.7.1 fixes the upload bug
+ 
+          curl -fsSL "https://cdn.geekbench.com/Geekbench-${GB_VERSION}-Linux.tar.gz" -o gb.tar.gz
+          tar xf gb.tar.gz
+          cd "Geekbench-${GB_VERSION}-Linux"
+          mkdir -p ../out
+ 
+          if [ -n "${GB_LICENSE_EMAIL:-}" ] && [ -n "${GB_LICENSE_KEY:-}" ]; then
+            # Licensed: machine-readable scores, no upload dependency
+            ./geekbench6 --unlock "$GB_LICENSE_EMAIL" "$GB_LICENSE_KEY"
+            ./geekbench6 --no-upload --export-json "../out/result-${RUN_ID}.json" | tee out.txt
+          else
+            # Free: upload + capture URL (numbers only viewable on the result page)
+            ./geekbench6 | tee out.txt
+            URL="$(grep -oE 'https://browser\.geekbench\.com/[^ ]+' out.txt | tail -1 || true)"
+            echo "run ${RUN_ID}: ${URL:-upload-failed}" > "../out/url-${RUN_ID}.txt"
+            echo "**Run #${RUN_ID}:** ${URL:-upload failed}" >> "$GITHUB_STEP_SUMMARY"
+          fi
+ 
+      - name: Upload result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: avrea-result-${{ matrix.run }}
+          path: out/
+          if-no-files-found: ignore
