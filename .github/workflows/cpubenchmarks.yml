@@ -76,10 +76,12 @@ jobs:
           BINNAME="$(basename "$BIN")"
           echo "PT_DIR=$PT_DIR" >> "$GITHUB_ENV"   # hand the dir to the next step
           cd "$PT_DIR"
-          # -r 3   : run all tests (CPU + memory) — guarantees the CPU suite runs
-          # -d 3   : long duration (more stable score)
-          # -debug : run headless, skip the upload prompt
-          "./$BINNAME" -r 3 -d 3 -debug
+          # PassMark is an ncurses app and CI has no terminal attached, so it fails
+          # with "Error opening terminal: unknown". Give it a valid TERM and a
+          # pseudo-tty via `script`. `script -e` still fails the job if PassMark errors.
+          export TERM=xterm
+          # -r 3 (all tests) · -d 3 (long duration) · -debug (headless, no upload prompt)
+          script -qec "./$BINNAME -r 3 -d 3 -debug" /dev/null
 
       - name: Print the single-thread score (compare this to the leaderboard)
         run: |
