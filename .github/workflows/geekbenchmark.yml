@@ -34,7 +34,7 @@ jobs:
           # 1. Resolve version: workflow input > latest on download page > pinned fallback
           GB_VERSION="${GB_VERSION_INPUT:-}"
           if [ -z "$GB_VERSION" ]; then
-            GB_VERSION="$(curl -fsSL https://www.geekbench.com/download/linux/ \
+            GB_VERSION="$(curl -fsSL -A 'Mozilla/5.0' https://www.geekbench.com/download/linux/ \
               | grep -oP 'You are downloading Geekbench \K[0-9.]+' | head -1 || true)"
           fi
           GB_VERSION="${GB_VERSION:-6.5.0}"
@@ -56,14 +56,32 @@ jobs:
 
           # 4. Run the benchmark
           if [ -n "${GB_LICENSE_EMAIL:-}" ] && [ -n "${GB_LICENSE_KEY:-}" ]; then
-            # Licensed: keep results local, export raw files as artifacts
+            # Licensed: keep results local, export JSON, parse scores
             ./geekbench6 --unlock "$GB_LICENSE_EMAIL" "$GB_LICENSE_KEY"
             ./geekbench6 --no-upload --save result.gb6 --export-json result.json | tee out.txt
+
+            SINGLE="$(jq -r '.sections[]? | select(.name=="Single-Core") | .score' result.json 2>/dev/null | head -1)"
+            MULTI="$(jq -r '.sections[]?  | select(.name=="Multi-Core")  | .score' result.json 2>/dev/null | head -1)"
+            if [ -z "${SINGLE:-}" ] && [ -z "${MULTI:-}" ]; then
+              echo "Could not parse scores from JSON; dumping top-level keys:"
+              jq 'keys, (.sections[]?|{name,score})' result.json || cat result.json
+            fi
+            {
+              echo ""
+              echo "| Metric | Score |"
+              echo "|---|---|"
+              echo "| Single-Core | ${SINGLE:-n/a} |"
+              echo "| Multi-Core  | ${MULTI:-n/a} |"
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "::notice title=${{ matrix.runner }}::single-core=${SINGLE:-n/a} multi-core=${MULTI:-n/a}"
           else
-            # Free: uploads to the Geekbench Browser and prints a URL
-            ./geekbench6 | tee out.txt
+            # Free: must upload to get scores; retry a few times, then surface the URL
+            for attempt in 1 2 3; do
+              if ./geekbench6 | tee out.txt; then break; fi
+              echo "Upload attempt $attempt failed, retrying..."; sleep 10
+            done
             URL="$(grep -oE 'https://browser\.geekbench\.com/[^ ]+' out.txt | tail -1 || true)"
-            echo "**Result:** ${URL:-see logs}" >> "$GITHUB_STEP_SUMMARY"
+            echo "**Result:** ${URL:-upload failed — see logs}" >> "$GITHUB_STEP_SUMMARY"
           fi
 
           # Stage result files for upload
