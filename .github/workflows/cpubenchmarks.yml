@@ -56,25 +56,37 @@ jobs:
           wget -q https://www.passmark.com/downloads/pt_linux_x64.zip
           unzip -q pt_linux_x64.zip
 
-      - name: Run CPU tests
+      - name: Locate and run the CPU benchmark
         run: |
-          cd PerformanceTest
-          chmod +x pt_linux_x64
-          # -r 1   : CPU tests only
+          # PassMark's zip layout can vary, so find the binary wherever it landed
+          # instead of assuming PerformanceTest/pt_linux_x64.
+          BIN="$(find "$GITHUB_WORKSPACE" -type f -name 'pt_linux_x64' 2>/dev/null | head -1)"
+          if [ -z "$BIN" ]; then
+            echo "Could not find pt_linux_x64. Here's what was actually extracted:"
+            find "$GITHUB_WORKSPACE" -maxdepth 3 -type f | sort
+            exit 1
+          fi
+          echo "Found binary at: $BIN"
+          chmod +x "$BIN"
+          PT_DIR="$(dirname "$BIN")"
+          echo "PT_DIR=$PT_DIR" >> "$GITHUB_ENV"   # hand the dir to the next step
+          cd "$PT_DIR"
+          # -r 3   : run all tests (CPU + memory) — guarantees the CPU suite runs
           # -d 3   : long duration (more stable score)
-          # -debug : run headless and skip the upload prompt
-          ./pt_linux_x64 -r 1 -d 3 -debug
+          # -debug : run headless, skip the upload prompt
+          ./pt_linux_x64 -r 3 -d 3 -debug
 
       - name: Print the single-thread score (compare this to the leaderboard)
         run: |
-          cd PerformanceTest
-          echo "================ FULL CPU RESULTS ================"
+          cd "$PT_DIR"
+          echo "================ RESULT FILES ================"
+          ls -la *.yml 2>/dev/null || echo "(no .yml files found in $PT_DIR)"
+          echo "================ FULL RESULTS ================"
           cat results_all.yml 2>/dev/null || cat results_cpu.yml 2>/dev/null || true
-          echo "=================================================="
+          echo "=============================================="
           echo ">>> The number that matches the RunsOn 'CPU speed' column:"
-          grep -i "CPU_SINGLETHREAD" results_all.yml 2>/dev/null \
-            || grep -i "CPU_SINGLETHREAD" results_cpu.yml 2>/dev/null \
-            || echo "CPU_SINGLETHREAD not found — check the full results above for the filename."
+          grep -i "CPU_SINGLETHREAD" *.yml 2>/dev/null \
+            || echo "CPU_SINGLETHREAD not found — check the file list / results above."
 
       # ARM RUNNERS: if you also offer arm64, duplicate this workflow and swap
       # pt_linux_x64 -> pt_linux_arm64 (and the matching .zip). You'll also need
