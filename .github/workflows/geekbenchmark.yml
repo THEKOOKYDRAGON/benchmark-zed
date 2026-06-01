@@ -1,0 +1,79 @@
+name: Geekbench 6
+
+on:
+  workflow_dispatch:
+    inputs:
+      gb_version:
+        description: "Geekbench version to pin (leave blank to auto-detect latest)"
+        required: false
+        default: ""
+
+jobs:
+  geekbench:
+    name: Geekbench 6 (${{ matrix.runner }})
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false        # one runner failing shouldn't cancel the others
+      matrix:
+        runner:
+          - blacksmith-32vcpu-ubuntu-2404
+          - ubuntu-24.04
+          - monkci-ubuntu-24.04-32
+          - avrea-ubuntu-latest-32-vcpu
+    steps:
+      - name: Run Geekbench 6
+        env:
+          # Optional: set these repo secrets to unlock the licensed CLI and
+          # keep results local (no public upload). Leave unset for free mode.
+          GB_LICENSE_EMAIL: ${{ secrets.GEEKBENCH_EMAIL }}
+          GB_LICENSE_KEY: ${{ secrets.GEEKBENCH_KEY }}
+          GB_VERSION_INPUT: ${{ github.event.inputs.gb_version }}
+        run: |
+          set -euo pipefail
+
+          # 1. Resolve version: workflow input > latest on download page > pinned fallback
+          GB_VERSION="${GB_VERSION_INPUT:-}"
+          if [ -z "$GB_VERSION" ]; then
+            GB_VERSION="$(curl -fsSL https://www.geekbench.com/download/linux/ \
+              | grep -oP 'You are downloading Geekbench \K[0-9.]+' | head -1 || true)"
+          fi
+          GB_VERSION="${GB_VERSION:-6.5.0}"
+          echo "Using Geekbench $GB_VERSION"
+
+          # 2. Download + extract (~230 MB, x86_64)
+          curl -fsSL "https://cdn.geekbench.com/Geekbench-${GB_VERSION}-Linux.tar.gz" -o gb.tar.gz
+          tar xf gb.tar.gz
+          cd "Geekbench-${GB_VERSION}-Linux"
+
+          # 3. Record machine context in the job summary
+          {
+            echo "### ${{ matrix.runner }}"
+            echo '```'
+            echo "vCPUs: $(nproc)"
+            lscpu | grep -E 'Model name|^CPU\(s\)|MHz' || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          # 4. Run the benchmark
+          if [ -n "${GB_LICENSE_EMAIL:-}" ] && [ -n "${GB_LICENSE_KEY:-}" ]; then
+            # Licensed: keep results local, export raw files as artifacts
+            ./geekbench6 --unlock "$GB_LICENSE_EMAIL" "$GB_LICENSE_KEY"
+            ./geekbench6 --no-upload --save result.gb6 --export-json result.json | tee out.txt
+          else
+            # Free: uploads to the Geekbench Browser and prints a URL
+            ./geekbench6 | tee out.txt
+            URL="$(grep -oE 'https://browser\.geekbench\.com/[^ ]+' out.txt | tail -1 || true)"
+            echo "**Result:** ${URL:-see logs}" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+          # Stage result files for upload
+          mkdir -p ../gb-results
+          cp -v out.txt result.json result.gb6 ../gb-results/ 2>/dev/null || true
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: geekbench-${{ matrix.runner }}
+          path: gb-results/
+          if-no-files-found: ignore
