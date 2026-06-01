@@ -88,3 +88,20 @@ jobs:
         uses: mozilla-actions/sccache-action@v0.0.7
       - run: ./script/linux # Install Dependencies
       - run: cargo build --release
+
+  avrea-cacheless:
+    name: avrea-Cacheless
+    runs-on: avrea-ubuntu-latest-32-vcpu 
+    defaults:
+      run:
+        working-directory: upstream
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+      - name: Run sccache-cache
+        uses: mozilla-actions/sccache-action@v0.0.7
+      - run: ./script/linux # Install Dependencies
+      - run: cargo build --release
