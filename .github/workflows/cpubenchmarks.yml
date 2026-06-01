@@ -15,7 +15,7 @@
 name: PassMark CPU Benchmark
 
 on:
-  workflow_dispatch:
+  workflow_dispatch: {}   # run manually from the Actions tab
 
 jobs:
   benchmark:
@@ -36,11 +36,18 @@ jobs:
       - name: Install PassMark dependencies
         run: |
           sudo apt-get update -y
-          # PassMark needs the legacy ncurses libs. On Ubuntu 24.04 these live in
-          # the 'universe' component; enable it if the install fails.
-          sudo apt-get install -y unzip wget libncurses5 libtinfo5 \
-            || (sudo add-apt-repository -y universe && sudo apt-get update -y \
-                && sudo apt-get install -y unzip wget libncurses5 libtinfo5)
+          sudo apt-get install -y unzip wget
+          # PassMark still needs the legacy ncurses libs (libtinfo.so.5 /
+          # libncurses.so.5), but Ubuntu 24.04 "Noble" dropped those packages.
+          # Pull them from the Ubuntu 22.04 "Jammy" archive instead. The version
+          # is detected dynamically so this won't break when Ubuntu bumps it.
+          POOL="http://archive.ubuntu.com/ubuntu/pool/universe/n/ncurses/"
+          LIST="$(wget -qO- "$POOL")"
+          TINFO="$(echo "$LIST"   | grep -oE 'libtinfo5_[^"]*_amd64\.deb'   | sort -u | tail -1)"
+          NCURSES="$(echo "$LIST" | grep -oE 'libncurses5_[^"]*_amd64\.deb' | sort -u | tail -1)"
+          echo "Fetching $TINFO and $NCURSES"
+          wget -q "${POOL}${TINFO}" "${POOL}${NCURSES}"
+          sudo apt-get install -y "./${TINFO}" "./${NCURSES}"
 
       - name: Download PassMark PerformanceTest (Linux x64)
         run: |
@@ -70,5 +77,6 @@ jobs:
             || echo "CPU_SINGLETHREAD not found — check the full results above for the filename."
 
       # ARM RUNNERS: if you also offer arm64, duplicate this workflow and swap
-      # pt_linux_x64 -> pt_linux_arm64 (and the matching .zip), then compare
-      # against the leaderboard's separate arm64 board.
+      # pt_linux_x64 -> pt_linux_arm64 (and the matching .zip). You'll also need
+      # the arm64 ncurses debs: change "_amd64.deb" to "_arm64.deb" in the
+      # dependency step. Then compare against the leaderboard's separate arm64 board.
