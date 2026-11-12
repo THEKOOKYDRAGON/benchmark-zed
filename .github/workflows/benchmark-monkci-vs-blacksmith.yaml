@@ -1,3 +1,4 @@
+
 name: Benchmark
 
 on:
@@ -16,9 +17,9 @@ jobs:
           submodules: recursive
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
-      - name: Run sccache
+      - name: Run sccache-cache
         uses: mozilla-actions/sccache-action@v0.0.7
-      - run: ./script/linux
+      - run: ./script/linux # Install Dependencies
       - run: cargo build --release
 
   github:
@@ -33,9 +34,9 @@ jobs:
           submodules: recursive
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
-      - name: Run sccache
+      - name: Run sccache-cache
         uses: mozilla-actions/sccache-action@v0.0.7
-      - run: ./script/linux
+      - run: ./script/linux # Install Dependencies
       - run: cargo build --release
 
   monkci:
@@ -50,7 +51,7 @@ jobs:
           submodules: recursive
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
-      - name: Run sccache
+      - name: Run sccache-cache
         uses: mozilla-actions/sccache-action@v0.0.7
-      - run: ./script/linux
+      - run: ./script/linux # Install Dependencies
       - run: cargo build --release
