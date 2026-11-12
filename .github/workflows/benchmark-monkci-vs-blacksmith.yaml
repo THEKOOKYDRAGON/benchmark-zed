@@ -1,0 +1,56 @@
+name: Benchmark
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  blacksmith:
+    name: Blacksmith
+    runs-on: blacksmith-32vcpu-ubuntu-2404
+    defaults:
+      run:
+        working-directory: upstream
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+      - name: Run sccache
+        uses: mozilla-actions/sccache-action@v0.0.7
+      - run: ./script/linux
+      - run: cargo build --release
+
+  github:
+    name: GitHub Actions
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: upstream
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+      - name: Run sccache
+        uses: mozilla-actions/sccache-action@v0.0.7
+      - run: ./script/linux
+      - run: cargo build --release
+
+  monkci:
+    name: Monk CI
+    runs-on: monkci-ubuntu-24.04-32
+    defaults:
+      run:
+        working-directory: upstream
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+      - name: Run sccache
+        uses: mozilla-actions/sccache-action@v0.0.7
+      - run: ./script/linux
+      - run: cargo build --release
