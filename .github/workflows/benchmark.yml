@@ -21,8 +21,8 @@ jobs:
   #       uses: mozilla-actions/sccache-action@v0.0.7
   #     - run: ./script/linux # Install Dependencies
   #     - run: cargo build --release
-  BlackSmith-cacheless:
-    name: BlackSmith Cacheless
+  BlackSmith:
+    name: BlackSmith
     runs-on: blacksmith-32vcpu-ubuntu-2404 
     defaults:
       run:
@@ -58,8 +58,8 @@ jobs:
   #       run: ./script/linux
   #     - name: Build with Cargo
   #       run: cargo build --release --verbose
-  github-cacheless:
-    name: Github Cacheless
+  github:
+    name: Github
     runs-on: ubuntu-24.04
     defaults:
       run:
@@ -75,8 +75,8 @@ jobs:
       - run: ./script/linux # Install Dependencies
       - run: cargo build --release
       
-  monkci-cacheless:
-    name: Monk CI Cacheless
+  monkci:
+    name: Monk CI
     runs-on: monkci-ubuntu-24.04-32
     defaults:
       run:
@@ -89,7 +89,5 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
       - name: Run sccache-cache
         uses: mozilla-actions/sccache-action@v0.0.7
-      - run: ./script/linux # Install Dependencies
-      - run: cargo build --release
       - run: ./script/linux # Install Dependencies
       - run: cargo build --release

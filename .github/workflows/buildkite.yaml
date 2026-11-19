@@ -24,8 +24,8 @@ jobs:
   #     - run: ./script/linux
   #     - run: cargo build --release
 
-  BlackSmith-cacheless:
-    name: BlackSmith Cacheless
+  BlackSmith:
+    name: BlackSmith
     runs-on: blacksmith-32vcpu-ubuntu-2404
     defaults:
       run:
@@ -44,8 +44,8 @@ jobs:
       - name: Build
         run: cargo build --release
 
-  github-cacheless:
-    name: Github Cacheless
+  github:
+    name: Github
     runs-on: ubuntu-24.04
     defaults:
       run:
@@ -64,8 +64,8 @@ jobs:
       - name: Build
         run: cargo build --release
 
-  monkci-cacheless:
-    name: Monk CI Cacheless
+  monkci:
+    name: Monk CI
     runs-on: monkci-ubuntu-24.04-32
     defaults:
       run:
