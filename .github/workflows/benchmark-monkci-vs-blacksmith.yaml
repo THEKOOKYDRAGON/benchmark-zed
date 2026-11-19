@@ -1,4 +1,4 @@
-name: Zed - Monk CI vs Blacksmith (32 vCPU)
+name: Zed - Monk CI vs Blacksmith
 on:
   workflow_dispatch: {}
 permissions:
@@ -49,7 +49,7 @@ jobs:
           PROVIDER: ${{ matrix.provider }}
         run: |
           {
-            echo "## $PROVIDER / Zed / 32 vCPU"
+            echo "## $PROVIDER / Zed"
             echo 'One build; no restored build cache. Queue and setup are separate from build timing.'
             echo '```text'
             cat "$RUNNER_TEMP/benchmark-results/source.txt" 2>/dev/null || true
